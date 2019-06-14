@@ -12,6 +12,7 @@ using Microsoft.Bot.Builder.Azure;
 using System.Linq;
 using Microsoft.Bot.Builder.AI.QnA;
 using System;
+using IncidentBot.Model;
 
 namespace EchoBot1.Bots
 {
@@ -30,6 +31,7 @@ namespace EchoBot1.Bots
             CosmosDBEndpoint = new Uri(CosmosServiceEndpoint),
             DatabaseId = CosmosDBDatabaseName,
         });
+        private static readonly MemoryStorage _myStorageMemory = new MemoryStorage();
         public EchoBot(QnAMakerEndpoint endpoint)
         {
             // connects to QnA Maker endpoint for each turn
@@ -48,6 +50,7 @@ namespace EchoBot1.Bots
         }
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
+            int i = 0;
             //await turnContext.SendActivityAsync(MessageFactory.Text($"Echo: {turnContext.Activity.Text}"), cancellationToken);
             // preserve user input.
             var utterance = turnContext.Activity.Text;
@@ -57,7 +60,8 @@ namespace EchoBot1.Bots
             try
             {
                 string[] utteranceList = { "UtteranceLog" };
-                logItems = _myStorage.ReadAsync<UtteranceLog>(utteranceList).Result?.FirstOrDefault().Value;
+                //logItems = _myStorage.ReadAsync<UtteranceLog>(utteranceList).Result?.FirstOrDefault().Value;
+                logItems = _myStorageMemory.ReadAsync<UtteranceLog>(utteranceList).Result?.FirstOrDefault().Value;
             }
             catch
             {
@@ -81,7 +85,8 @@ namespace EchoBot1.Bots
                 try
                 {
                     // Save the user message to your Storage.
-                    await _myStorage.WriteAsync(changes, cancellationToken);
+                    //await _myStorage.WriteAsync(changes, cancellationToken);
+                    await _myStorageMemory.WriteAsync(changes, cancellationToken);
                 }
                 catch
                 {
@@ -97,7 +102,14 @@ namespace EchoBot1.Bots
                 // increment turn counter.
                 logItems.TurnNumber++;
 
-                
+                if(logItems.TurnNumber == 4)
+                {
+                    Incident incident = new Incident();
+                    incident.IncidentId = ++i;
+                    incident.Location = logItems.UtteranceList[1];
+                    incident.IssueType = logItems.UtteranceList[2];
+                    incident.CreatorContact = logItems.UtteranceList[3];
+                }
 
                 // Create Dictionary object to hold new list of messages.
                 var changes = new Dictionary<string, object>();
@@ -108,7 +120,8 @@ namespace EchoBot1.Bots
                 try
                 {
                     // Save new list to your Storage.
-                    await _myStorage.WriteAsync(changes, cancellationToken);
+                    //await _myStorage.WriteAsync(changes, cancellationToken);
+                    await _myStorageMemory.WriteAsync(changes, cancellationToken);
                 }
                 catch
                 {
@@ -166,7 +179,7 @@ namespace EchoBot1.Bots
             }
             else
             {
-                await turnContext.SendActivityAsync(MessageFactory.Text("Sorry, could not find an answer in the Q and A system."), cancellationToken);
+                await turnContext.SendActivityAsync(MessageFactory.Text("Thank you for visiting Chennai Corporation"), cancellationToken);
             }
         }
     }

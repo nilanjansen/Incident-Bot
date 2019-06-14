@@ -8,23 +8,115 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Schema;
+using Microsoft.Bot.Builder.Azure;
 using System.Linq;
 using Microsoft.Bot.Builder.AI.QnA;
+using System;
 
 namespace EchoBot1.Bots
 {
     public class EchoBot : ActivityHandler
     {
+
+        private const string CosmosServiceEndpoint = "https://deltacosmos.documents.azure.com:443/";
+        private const string CosmosDBKey = "0L1ffafNohh46vJSvtA9aNh25EPHnfnngPqZyYt9NLAYDoiINa3F5BxldU2duYuawYfgs9L2ns3zPmV14NjeZQ==";
+        private const string CosmosDBDatabaseName = "incident-bot-cosmos-db";
+        private const string CosmosDBContainerName = "bot-storage";
         public QnAMaker EchoBotQnA { get; private set; }
+        private static readonly CosmosDbStorage _myStorage = new CosmosDbStorage(new CosmosDbStorageOptions
+        {
+            AuthKey = CosmosDBKey,
+            CollectionId = CosmosDBContainerName,
+            CosmosDBEndpoint = new Uri(CosmosServiceEndpoint),
+            DatabaseId = CosmosDBDatabaseName,
+        });
         public EchoBot(QnAMakerEndpoint endpoint)
         {
             // connects to QnA Maker endpoint for each turn
             EchoBotQnA = new QnAMaker(endpoint);
         }
+        public class UtteranceLog : IStoreItem
+        {
+            // A list of things that users have said to the bot
+            public List<string> UtteranceList { get; } = new List<string>();
+
+            // The number of conversational turns that have occurred        
+            public int TurnNumber { get; set; } = 0;
+
+            // Create concurrency control where this is used.
+            public string ETag { get; set; } = "*";
+        }
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
             //await turnContext.SendActivityAsync(MessageFactory.Text($"Echo: {turnContext.Activity.Text}"), cancellationToken);
+            // preserve user input.
+            var utterance = turnContext.Activity.Text;
+            // make empty local logitems list.
+            UtteranceLog logItems = null;
             // First send the user input to your QnA Maker knowledgebase
+            try
+            {
+                string[] utteranceList = { "UtteranceLog" };
+                logItems = _myStorage.ReadAsync<UtteranceLog>(utteranceList).Result?.FirstOrDefault().Value;
+            }
+            catch
+            {
+                // Inform the user an error occured.
+                await turnContext.SendActivityAsync("Sorry, something went wrong reading your stored messages!");
+            }
+            if (logItems is null)
+            {
+                // add the current utterance to a new object.
+                logItems = new UtteranceLog();
+                logItems.UtteranceList.Add(utterance);
+                // set initial turn counter to 1.
+                logItems.TurnNumber++;
+
+                
+                // Create Dictionary object to hold received user messages.
+                var changes = new Dictionary<string, object>();
+                {
+                    changes.Add("UtteranceLog", logItems);
+                }
+                try
+                {
+                    // Save the user message to your Storage.
+                    await _myStorage.WriteAsync(changes, cancellationToken);
+                }
+                catch
+                {
+                    // Inform the user an error occured.
+                    await turnContext.SendActivityAsync("Sorry, something went wrong storing your message!");
+                }
+
+            }
+            else
+            {
+                // add new message to list of messages to display.
+                logItems.UtteranceList.Add(utterance);
+                // increment turn counter.
+                logItems.TurnNumber++;
+
+                
+
+                // Create Dictionary object to hold new list of messages.
+                var changes = new Dictionary<string, object>();
+                {
+                    changes.Add("UtteranceLog", logItems);
+                };
+
+                try
+                {
+                    // Save new list to your Storage.
+                    await _myStorage.WriteAsync(changes, cancellationToken);
+                }
+                catch
+                {
+                    // Inform the user an error occured.
+                    await turnContext.SendActivityAsync("Sorry, something went wrong storing your message!");
+                }
+            }
+
             await AccessQnAMaker(turnContext, cancellationToken);
         }
 

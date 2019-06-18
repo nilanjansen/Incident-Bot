@@ -111,8 +111,9 @@ namespace EchoBot1.Bots
                     incident.Location = logItems.UtteranceList[1];
                     incident.IssueType = logItems.UtteranceList[2];
                     incident.CreatorContact = logItems.UtteranceList[3];
+                    var result = PostDataToAPI.AddIncident(incident);
                 }
-                PostDataToAPI.AddIncident(incident);
+                
                 // Create Dictionary object to hold new list of messages.
                 var changes = new Dictionary<string, object>();
                 {

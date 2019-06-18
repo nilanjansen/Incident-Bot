@@ -6,7 +6,7 @@
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Extensions.Configuration;
 
-namespace EchoBot1
+namespace IncidentBot
 {
     public class ConfigurationCredentialProvider : SimpleCredentialProvider
     {

@@ -6,7 +6,7 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 
-namespace EchoBot1
+namespace IncidentBot
 {
     public class Program
     {

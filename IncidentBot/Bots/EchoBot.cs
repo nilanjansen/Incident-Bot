@@ -13,6 +13,7 @@ using System.Linq;
 using Microsoft.Bot.Builder.AI.QnA;
 using System;
 using IncidentBot.Model;
+using IncidentBot.ServiceReference;
 
 namespace EchoBot1.Bots
 {
@@ -51,6 +52,7 @@ namespace EchoBot1.Bots
         protected override async Task OnMessageActivityAsync(ITurnContext<IMessageActivity> turnContext, CancellationToken cancellationToken)
         {
             int i = 0;
+            Incident incident = new Incident();
             //await turnContext.SendActivityAsync(MessageFactory.Text($"Echo: {turnContext.Activity.Text}"), cancellationToken);
             // preserve user input.
             var utterance = turnContext.Activity.Text;
@@ -104,13 +106,13 @@ namespace EchoBot1.Bots
 
                 if(logItems.TurnNumber == 4)
                 {
-                    Incident incident = new Incident();
+                    
                     incident.IncidentId = ++i;
                     incident.Location = logItems.UtteranceList[1];
                     incident.IssueType = logItems.UtteranceList[2];
                     incident.CreatorContact = logItems.UtteranceList[3];
                 }
-
+                PostDataToAPI.AddIncident(incident);
                 // Create Dictionary object to hold new list of messages.
                 var changes = new Dictionary<string, object>();
                 {

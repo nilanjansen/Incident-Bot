@@ -78,7 +78,7 @@ namespace IncidentBot
         {
             // Get the current profile object from user state.
             var incident = await _incidentAccessor.GetAsync(stepContext.Context, () => new Incident(), cancellationToken);
-
+            string msg;
             Random random = new Random();
 
             incident.IncidentId = random.Next(1000, 9999);
@@ -86,8 +86,15 @@ namespace IncidentBot
             incident.IssueType = (string)stepContext.Values["problem"];
             incident.CreatorContact = (string)stepContext.Result;
             var result = PostDataToAPI.AddIncident(incident);
-
-            var msg = $"Thank you. Your incident number is INC{incident.IncidentId}. You will be contacted soon";
+            if (!result.IsSuccessStatusCode)
+            {
+                msg = $"Please try again later";
+            }
+            else
+            {
+                msg = $"Thank you. Your incident number is INC{incident.IncidentId}. You will be contacted soon";
+            }
+            
 
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text(msg), cancellationToken);

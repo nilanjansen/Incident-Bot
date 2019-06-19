@@ -21,12 +21,9 @@ namespace IncidentBot.ServiceReference
 
             byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            var result = httpClient.PostAsync("https://localhost:44338/api/Incident", byteContent).Result;
+            var result = httpClient.PostAsync("https://reportincidentapi.azurewebsites.net/api/Incident", byteContent).Result;
 
-            //var response = await httpClient.PostAsync("https://reportincidentapi.azurewebsites.net/api/incident", content);
-            //response.EnsureSuccessStatusCode();
-            //string resContent = await response.Content.ReadAsStringAsync();
-            //return await Task.Run(() => JsonObject.Parse(content));
+            
             return result;
         }
     }

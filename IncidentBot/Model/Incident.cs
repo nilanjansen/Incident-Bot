@@ -11,5 +11,6 @@ namespace IncidentBot.Model
         public string CreatorContact { get; set; }
         public string IssueType { get; set; }
         public string Location { get; set; }
+        public byte[] Media { get; set; }
     }
 }

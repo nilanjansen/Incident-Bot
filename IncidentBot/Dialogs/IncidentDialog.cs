@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using IncidentBot.Model;
@@ -27,6 +28,7 @@ namespace IncidentBot
             {
                 LocationStepAsync,
                 ProblemStepAsync,
+                AttachmentStepAsync,
                 ContactStepAsync,
                 SummaryStepAsync,
             };
@@ -35,6 +37,7 @@ namespace IncidentBot
             AddDialog(new WaterfallDialog(nameof(WaterfallDialog), waterfallSteps));
             AddDialog(new TextPrompt(nameof(TextPrompt)));
             AddDialog(new ChoicePrompt(nameof(ChoicePrompt)));
+            AddDialog(new AttachmentPrompt(nameof(AttachmentPrompt)));
 
             // The initial child Dialog to run.
             InitialDialogId = nameof(WaterfallDialog);
@@ -67,9 +70,19 @@ namespace IncidentBot
                 }, cancellationToken);
         }
 
-        private static async Task<DialogTurnResult> ContactStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+        private static async Task<DialogTurnResult> AttachmentStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             stepContext.Values["problem"] = ((FoundChoice)stepContext.Result).Value;
+            
+
+            return await stepContext.PromptAsync(nameof(AttachmentPrompt), new PromptOptions { Prompt = MessageFactory.Text("Please upload image") }, cancellationToken);
+        }
+
+        private static async Task<DialogTurnResult> ContactStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
+        {
+            var web = new WebClient();
+            byte[] image = web.DownloadData(((List<Microsoft.Bot.Schema.Attachment>)stepContext.Result)[0].ContentUrl);
+            stepContext.Values["attachment"] = image;
 
             return await stepContext.PromptAsync(nameof(TextPrompt), new PromptOptions { Prompt = MessageFactory.Text("Please enter your contact number") }, cancellationToken);
         }
@@ -84,6 +97,7 @@ namespace IncidentBot
             incident.IncidentId = random.Next(1000, 9999);
             incident.Location = (string)stepContext.Values["location"];
             incident.IssueType = (string)stepContext.Values["problem"];
+            incident.Media = (byte[])stepContext.Values["attachment"];
             incident.CreatorContact = (string)stepContext.Result;
             var result = PostDataToAPI.AddIncident(incident);
 
@@ -97,3 +111,4 @@ namespace IncidentBot
         }
     }
 }
+

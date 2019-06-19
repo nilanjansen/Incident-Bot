@@ -11,6 +11,7 @@ using IncidentBot.ServiceReference;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Builder.Dialogs.Choices;
+using Microsoft.Bot.Connector.Authentication;
 
 namespace IncidentBot
 {
@@ -73,7 +74,7 @@ namespace IncidentBot
         private static async Task<DialogTurnResult> AttachmentStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             stepContext.Values["problem"] = ((FoundChoice)stepContext.Result).Value;
-            
+
 
             return await stepContext.PromptAsync(nameof(AttachmentPrompt), new PromptOptions { Prompt = MessageFactory.Text("Please upload image") }, cancellationToken);
         }
@@ -81,6 +82,8 @@ namespace IncidentBot
         private static async Task<DialogTurnResult> ContactStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             var web = new WebClient();
+            var apiKey = await new MicrosoftAppCredentials("434106c0-774c-4b6f-a29c-fe4c28d5ef6c", "{v&VD4A8kea.P9$+^HW2%KfG9#").GetTokenAsync();
+            web.Headers[HttpRequestHeader.Authorization] = "Bearer " + apiKey;
             byte[] image = web.DownloadData(((List<Microsoft.Bot.Schema.Attachment>)stepContext.Result)[0].ContentUrl);
             stepContext.Values["attachment"] = image;
 
@@ -108,7 +111,7 @@ namespace IncidentBot
             {
                 msg = $"Thank you. Your incident number is INC{incident.IncidentId}. You will be contacted soon";
             }
-            
+
 
 
             await stepContext.Context.SendActivityAsync(MessageFactory.Text(msg), cancellationToken);

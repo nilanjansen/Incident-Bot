@@ -82,7 +82,7 @@ namespace IncidentBot
         private static async Task<DialogTurnResult> ContactStepAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
             var web = new WebClient();
-            var apiKey = await new MicrosoftAppCredentials("434106c0-774c-4b6f-a29c-fe4c28d5ef6c", "{v&VD4A8kea.P9$+^HW2%KfG9#").GetTokenAsync();
+            var apiKey = await new MicrosoftAppCredentials("cf362c36-9ac0-49df-862a-597b24efd4f5", "OWgBNk=I=ZvO_MJBU+egT5mpp=Fj").GetTokenAsync();
             web.Headers[HttpRequestHeader.Authorization] = "Bearer " + apiKey;
             byte[] image = web.DownloadData(((List<Microsoft.Bot.Schema.Attachment>)stepContext.Result)[0].ContentUrl);
             stepContext.Values["attachment"] = image;
